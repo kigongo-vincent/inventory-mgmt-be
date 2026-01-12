@@ -1,0 +1,65 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+
+      - name: build image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/inventory-mgmt-be:latest .
+
+      - name: docker hub login
+        run: |
+          echo ${{ secrets.DOCKER_PAT }} | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: push image to docker hub
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/inventory-mgmt-be:latest
+
+      - name: deploy to ec2
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          port: 22
+          username: ec2-user
+          key: ${{ secrets.EC2_SECRET }}
+          script: |
+            docker pull ${{ secrets.DOCKER_USERNAME }}/inventory-mgmt-be:latest
+            docker stop inventory-mgmt-be || true 
+            docker rm inventory-mgmt-be || true 
+            docker run -d \
+            --name inventory-mgmt-be \
+            -p 8080:8080 \
+            -e PORT=${{ secrets.PORT }} \
+            -e ENV=${{ secrets.ENV }} \
+            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+            -e JWT_EXPIRATION_HOURS=${{ secrets.JWT_EXPIRATION_HOURS }} \
+            -e CORS_ALLOWED_ORIGINS=${{ secrets.CORS_ALLOWED_ORIGINS }} \
+            -e DB_HOST=${{ secrets.DB_HOST }} \
+            -e DB_PORT=${{ secrets.DB_PORT }} \
+            -e DB_USER=${{ secrets.DB_USER }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e DB_NAME=${{ secrets.DB_NAME }} \
+            -e DB_SSLMODE=${{ secrets.DB_SSLMODE }} \
+            -e COMPANY_ADMIN_EMAIL=${{ secrets.COMPANY_ADMIN_EMAIL }} \
+            -e COMPANY_ADMIN_PASSWORD=${{ secrets.COMPANY_ADMIN_PASSWORD }} \
+            -e COMPANY_ADMIN_NAME=${{ secrets.COMPANY_ADMIN_NAME }} \
+            -e COMPANY_ADMIN_USERNAME=${{ secrets.COMPANY_ADMIN_USERNAME }} \
+            -e COMPANY_ADMIN_BRANCH=${{ secrets.COMPANY_ADMIN_BRANCH }} \
+            -e COMPANY_NAME=${{ secrets.COMPANY_NAME }} \
+            -e COMPANY_EMAIL=${{ secrets.COMPANY_EMAIL }} \
+            -e OWNER_NAME=${{ secrets.OWNER_NAME }} \
+            -e OWNER_EMAIL=${{ secrets.OWNER_EMAIL }} \
+            -e OWNER_USERNAME=${{ secrets.OWNER_USERNAME }} \
+            -e OWNER_PASSWORD=${{ secrets.OWNER_PASSWORD }} \
+            -e BRANCH_NAME=${{ secrets.BRANCH_NAME }} \
+            --restart always \
+            ${{ secrets.DOCKER_USERNAME }}/inventory-mgmt-be:latest

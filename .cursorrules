@@ -1,0 +1,9 @@
+use go latest 
+use fiber, gorm
+use postgres running in a docker container for dev
+ensure logging,
+rate limiting
+caching using redis where neccessary 
+follow the found arch
+follow SOLID 
+refer to the latest docs for implementing feature
