@@ -56,6 +56,7 @@ type Sale struct {
 	ProductAttributes JSONB          `json:"productAttributes" gorm:"type:jsonb"`
 	Quantity          int            `json:"quantity" gorm:"not null"`
 	UnitPrice         float64        `json:"unitPrice" gorm:"not null"`
+	ExtraCosts        float64        `json:"extraCosts" gorm:"default:0"` // Additional costs like delivery charges
 	TotalPrice        float64        `json:"totalPrice" gorm:"not null"`
 	Currency          string         `json:"currency" gorm:"not null"`
 	SellerID          uint           `json:"sellerId" gorm:"not null;index"`
@@ -96,6 +97,7 @@ type CreateSaleRequest struct {
 	ProductAttributes  map[string]interface{} `json:"productAttributes"`
 	Quantity           int                    `json:"quantity" binding:"required"`
 	UnitPrice          float64                `json:"unitPrice" binding:"required"`
+	ExtraCosts         float64                `json:"extraCosts"` // Optional additional costs like delivery charges
 	TotalPrice         float64                `json:"totalPrice" binding:"required"`
 	Currency           string                 `json:"currency" binding:"required"`
 	SellerID           uint                   `json:"sellerId"` // Optional - will be set from token context
@@ -112,6 +114,7 @@ type UpdateSaleRequest struct {
 	ProductAttributes map[string]interface{} `json:"productAttributes,omitempty"`
 	Quantity          *int                   `json:"quantity,omitempty"`
 	UnitPrice         *float64               `json:"unitPrice,omitempty"`
+	ExtraCosts        *float64               `json:"extraCosts,omitempty"` // Optional additional costs like delivery charges
 	TotalPrice        *float64               `json:"totalPrice,omitempty"`
 	Currency          *string                `json:"currency,omitempty"`
 	SellerID          *uint                  `json:"sellerId,omitempty"`

@@ -92,13 +92,18 @@ func (s *SaleService) GetSalesByDateRange(startDate, endDate time.Time) ([]*Sale
 }
 
 func (s *SaleService) CreateSale(req CreateSaleRequest) (*Sale, error) {
+	// Use provided total price (allows manual override from frontend)
+	// Frontend sends calculated total or overridden total
+	finalTotalPrice := req.TotalPrice
+	
 	sale := &Sale{
 		ProductID:         req.ProductID,
 		ProductName:       req.ProductName,
 		ProductAttributes: JSONB(req.ProductAttributes),
 		Quantity:          req.Quantity,
 		UnitPrice:         req.UnitPrice,
-		TotalPrice:        req.TotalPrice,
+		ExtraCosts:        req.ExtraCosts,
+		TotalPrice:        finalTotalPrice, // Use provided total (calculated or overridden)
 		Currency:          req.Currency,
 		SellerID:          req.SellerID,
 		PaymentStatus:     req.PaymentStatus,
@@ -145,8 +150,26 @@ func (s *SaleService) UpdateSale(id uint, req UpdateSaleRequest) (*Sale, error) 
 	if req.UnitPrice != nil {
 		sale.UnitPrice = *req.UnitPrice
 	}
+	if req.ExtraCosts != nil {
+		sale.ExtraCosts = *req.ExtraCosts
+	}
 	if req.TotalPrice != nil {
 		sale.TotalPrice = *req.TotalPrice
+	} else if req.UnitPrice != nil || req.Quantity != nil || req.ExtraCosts != nil {
+		// Recalculate total if any component changed
+		unitPrice := sale.UnitPrice
+		quantity := sale.Quantity
+		extraCosts := sale.ExtraCosts
+		if req.UnitPrice != nil {
+			unitPrice = *req.UnitPrice
+		}
+		if req.Quantity != nil {
+			quantity = *req.Quantity
+		}
+		if req.ExtraCosts != nil {
+			extraCosts = *req.ExtraCosts
+		}
+		sale.TotalPrice = (unitPrice * float64(quantity)) + extraCosts
 	}
 	if req.Currency != nil {
 		sale.Currency = *req.Currency
