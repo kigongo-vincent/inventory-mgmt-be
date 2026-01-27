@@ -23,7 +23,7 @@ type DatabaseConfig struct {
 // GetDatabaseConfig returns database configuration from environment variables
 func GetDatabaseConfig() *DatabaseConfig {
 	return &DatabaseConfig{
-		Host:     getEnv("DB_HOST", "localhost"),
+		Host:     getEnv("DB_HOST", "inventory-mgmt.c3oeckgkqw12.eu-north-1.rds.amazonaws.com"),
 		Port:     getEnv("DB_PORT", "5432"),
 		User:     getEnv("DB_USER", "postgres"),
 		Password: getEnv("DB_PASSWORD", "postgres"),
