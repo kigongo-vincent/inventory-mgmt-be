@@ -42,6 +42,9 @@ func (c *DatabaseConfig) GetDSN() string {
 
 // InitDB initializes and returns a GORM database connection
 func InitDB() (*gorm.DB, error) {
+	var name = "inventory_mgmt"
+
+	_ = name
 	dbConfig := GetDatabaseConfig()
 
 	dsn := dbConfig.GetDSN()
