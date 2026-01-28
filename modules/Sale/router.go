@@ -333,18 +333,20 @@ func salesEventsHandler(c *gin.Context) {
 		sseService.UnregisterClient(userIDUint, *companyIDPtr)
 	}()
 
-	// Stream events to client
+	// Stream events to client (use two-value receive so we exit when channel is closed by replacement)
 	for {
 		select {
-		case message := <-client.Channel:
+		case message, ok := <-client.Channel:
+			if !ok {
+				// Channel closed (client replaced or unregistered), exit without unregistering again
+				return
+			}
 			if _, err := c.Writer.Write(message); err != nil {
-				// Client disconnected
 				sseService.UnregisterClient(userIDUint, *companyIDPtr)
 				return
 			}
 			c.Writer.Flush()
 		case <-notify:
-			// Client disconnected
 			sseService.UnregisterClient(userIDUint, *companyIDPtr)
 			return
 		}

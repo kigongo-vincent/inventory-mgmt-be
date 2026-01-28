@@ -35,13 +35,21 @@ func GetSSEService() *SSEService {
 	return sseService
 }
 
-// RegisterClient registers a new SSE client
+// RegisterClient registers a new SSE client. If this user already has a connection,
+// the previous client's channel is closed first so the old handler can exit (prevents
+// goroutine/connection leak and self-DDoS from reconnects).
 func (s *SSEService) RegisterClient(userID uint, companyID uint, role User.UserRole) *SSEClient {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.clients[companyID] == nil {
 		s.clients[companyID] = make(map[uint]*SSEClient)
+	}
+
+	// Close existing client for this user so the old request's goroutine exits
+	if existing, exists := s.clients[companyID][userID]; exists {
+		close(existing.Channel)
+		delete(s.clients[companyID], userID)
 	}
 
 	client := &SSEClient{
