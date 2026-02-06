@@ -12,6 +12,7 @@ import (
 	"github.com/kigongo-vincent/inventory-mgmt-be.git/config"
 	"github.com/kigongo-vincent/inventory-mgmt-be.git/modules/Company"
 	"github.com/kigongo-vincent/inventory-mgmt-be.git/modules/Notification"
+	"github.com/kigongo-vincent/inventory-mgmt-be.git/modules/Expense"
 	"github.com/kigongo-vincent/inventory-mgmt-be.git/modules/Product"
 	"github.com/kigongo-vincent/inventory-mgmt-be.git/modules/Sale"
 	"github.com/kigongo-vincent/inventory-mgmt-be.git/modules/User"
@@ -51,6 +52,7 @@ func main() {
 	Notification.InitializeService(db)
 	Product.InitializeService(db)
 	Sale.InitializeService(db)
+	Expense.InitializeService(db)
 
 	// Initialize Gin router
 	r := gin.Default()
@@ -86,6 +88,7 @@ func main() {
 		Notification.RegisterRoutes(protected)
 		Product.RegisterRoutes(protected)
 		Sale.RegisterRoutes(protected)
+		Expense.RegisterRoutes(protected)
 	}
 
 	// Get port from environment or use default
@@ -146,6 +149,11 @@ func migrateDatabase(db *gorm.DB) error {
 		return err
 	}
 
+	// 6. Expense (depends on User and Branch)
+	if err := db.AutoMigrate(&Expense.Expense{}); err != nil {
+		return err
+	}
+
 	// Verify that all ID columns are integer type (not UUID)
 	if err := verifyIDTypes(db); err != nil {
 		log.Printf("Warning: ID type verification failed: %v", err)
@@ -174,7 +182,7 @@ func migrateColumnTypes(db *gorm.DB) error {
 	infoQuery := `
 		SELECT table_name, column_name, data_type, column_default
 		FROM information_schema.columns 
-		WHERE table_name IN ('companies', 'branches', 'user_models', 'notifications', 'products', 'sales')
+		WHERE table_name IN ('companies', 'branches', 'user_models', 'notifications', 'products', 'sales', 'expenses')
 		AND (column_name = 'id' 
 		     OR column_name LIKE '%_id' 
 		     OR column_name = 'company_id' 
@@ -214,7 +222,7 @@ func migrateColumnTypes(db *gorm.DB) error {
 	log.Println("All existing data will be lost!")
 
 	// Drop all tables in reverse dependency order (CASCADE handles everything)
-	tables := []string{"sales", "products", "notifications", "user_models", "branches", "companies"}
+	tables := []string{"expenses", "sales", "products", "notifications", "user_models", "branches", "companies"}
 	for _, table := range tables {
 		if err := db.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE", table)).Error; err != nil {
 			log.Printf("Warning: Error dropping table %s: %v", table, err)
@@ -255,7 +263,7 @@ func verifyIDTypes(db *gorm.DB) error {
 	verifyQuery := `
 		SELECT table_name, data_type
 		FROM information_schema.columns 
-		WHERE table_name IN ('companies', 'branches', 'user_models', 'notifications', 'products', 'sales')
+		WHERE table_name IN ('companies', 'branches', 'user_models', 'notifications', 'products', 'sales', 'expenses')
 		AND column_name = 'id'
 		ORDER BY table_name
 	`
