@@ -11,8 +11,8 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/kigongo-vincent/inventory-mgmt-be.git/config"
 	"github.com/kigongo-vincent/inventory-mgmt-be.git/modules/Company"
-	"github.com/kigongo-vincent/inventory-mgmt-be.git/modules/Notification"
 	"github.com/kigongo-vincent/inventory-mgmt-be.git/modules/Expense"
+	"github.com/kigongo-vincent/inventory-mgmt-be.git/modules/Notification"
 	"github.com/kigongo-vincent/inventory-mgmt-be.git/modules/Product"
 	"github.com/kigongo-vincent/inventory-mgmt-be.git/modules/Sale"
 	"github.com/kigongo-vincent/inventory-mgmt-be.git/modules/User"
@@ -26,7 +26,7 @@ func main() {
 		env = "development"
 	}
 
-	envFile := ".env." + env
+	envFile := ".env"
 	if err := godotenv.Load(envFile); err != nil {
 		log.Printf("Warning: Error loading %s file: %v", envFile, err)
 		// Try loading .env as fallback
@@ -98,9 +98,10 @@ func main() {
 	}
 
 	log.Printf("Server starting on port %s", port)
-	if err := r.Run(":" + port); err != nil {
-		log.Fatal("Failed to start server:", err)
-	}
+	// if err := ; err != nil {
+	// 	log.Fatal("Failed to start server:", err)
+	// }
+	log.Fatal(r.Run(":" + port))
 }
 
 // migrateDatabase runs auto-migration for all models
