@@ -37,7 +37,7 @@ jobs:
             docker rm inventory || true 
             docker run -d \
             --name inventory \
-            -p 8080:8080 \
+            -p 3006:8080 \
             -e PORT=${{ secrets.PORT }} \
             -e ENV=${{ secrets.ENV }} \
             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
